@@ -8,18 +8,38 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
+	"github.com/segmentio/conf"
 )
 
 func main() {
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "admin",
-		Addr:                 "localhost",
-		DBName:               "TestDb",
-		AllowNativePasswords: true,
+	var config = struct {
+		Iterations             int    `conf:"iterations" help:"Number of iterations to run"`
+		Version                int    `conf:"version" help:"Version of UUID to use"`
+		DbAddress              string `conf:"dbaddress" help:"Address of database"`
+		Db                     string `conf:"db" help:"Database to connect to"`
+		DbUsername             string `conf:"dbusername" help:"Username to connect to database"`
+		DbPassword             string `conf:"dbpassword" help:"Password to connect to database"`
+		DbAllowNativePasswords bool   `conf:"dballownativepasswords" help:"Allow native passwords"`
+	}{
+		// defaults should match docker-compose
+		DbAddress:              "localhost",
+		Db:                     "TestDb",
+		DbUsername:             "root",
+		DbPassword:             "admin",
+		DbAllowNativePasswords: true,
 	}
 
-	db, err := sql.Open("mysql", config.FormatDSN())
+	conf.Load(&config)
+
+	dbConfig := mysql.Config{
+		User:                 config.DbUsername,
+		Passwd:               config.DbPassword,
+		Addr:                 config.DbAddress,
+		DBName:               config.Db,
+		AllowNativePasswords: config.DbAllowNativePasswords,
+	}
+
+	db, err := sql.Open("mysql", dbConfig.FormatDSN())
 	if err != nil {
 		panic(err.Error())
 	}
@@ -38,22 +58,22 @@ func main() {
 
 	slog.Info("connected")
 
-	iterations := 100000
+	iterations := config.Iterations
 
-	version := 1
+	version := config.Version
 
 	ids := make([]string, iterations)
 
 	for i := 0; i < iterations; i++ {
-		if version == 1 {
+
+		switch version {
+		case 1:
 			val, err := uuid.NewUUID()
 			if err != nil {
 				slog.Error("Error creating UUID: ", err)
 			}
 			ids[i] = val.String()
-		}
-
-		if version == 4 {
+		case 4:
 			val, err := uuid.NewRandom()
 			if err != nil {
 				slog.Error("Error creating UUID: ", err)
