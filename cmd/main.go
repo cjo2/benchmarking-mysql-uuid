@@ -64,23 +64,25 @@ func main() {
 	stats := internal.Stats{}
 	start := time.Now()
 
+	// precomputed to remove uuid generation from the benchmark
 	ids := make([]string, iterations)
 
 	for i := 0; i < iterations; i++ {
+		var val uuid.UUID
+		var uuidErr error
+
 		switch version {
 		case 1:
-			val, err := uuid.NewUUID()
-			if err != nil {
-				slog.Error("Error creating UUID: ", err)
-			}
-			ids[i] = val.String()
+			val, uuidErr = uuid.NewUUID()
 		case 4:
-			val, err := uuid.NewRandom()
-			if err != nil {
-				slog.Error("Error creating UUID: ", err)
-			}
-			ids[i] = val.String()
+			val, uuidErr = uuid.NewRandom()
 		}
+
+		if uuidErr != nil {
+			slog.Error("Error creating UUID: ", err)
+		}
+
+		ids[i] = val.String()
 	}
 
 	go func() {
