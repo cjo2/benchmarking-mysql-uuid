@@ -1,8 +1,8 @@
 package main
 
 import (
+	"benchmarking-mysql-uuid/internal"
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -59,13 +59,14 @@ func main() {
 	slog.Info("connected")
 
 	iterations := config.Iterations
-
 	version := config.Version
+
+	stats := internal.Stats{}
+	start := time.Now()
 
 	ids := make([]string, iterations)
 
 	for i := 0; i < iterations; i++ {
-
 		switch version {
 		case 1:
 			val, err := uuid.NewUUID()
@@ -82,17 +83,25 @@ func main() {
 		}
 	}
 
-	start := time.Now()
+	go func() {
+		for {
+			select {
+			case <-time.Tick(3 * time.Second):
+				slog.With("success", stats.GetSuccessfulInserts(), "failure", stats.GetFailedInserts()).Info("stats", "timeElapsed", time.Since(start).String())
+			}
+		}
+	}()
 
 	for i := 0; i < iterations; i++ {
 		_, err = db.Exec("INSERT INTO TestTable (ID, Name) VALUES (?, ?)", ids[i], "")
 		if err != nil {
 			slog.Error("Error inserting row: ", err)
+			stats.IncrementFailedInserts()
+			continue
 		}
+
+		stats.IncrementSuccessfulInserts()
 	}
-
-	since := time.Since(start)
-
-	slog.Info(fmt.Sprintf("Time to insert rows: %s", since.String()))
-
+	
+	slog.With("success", stats.GetSuccessfulInserts(), "failure", stats.GetFailedInserts()).Info("stats", "timeElapsed", time.Since(start).String())
 }
