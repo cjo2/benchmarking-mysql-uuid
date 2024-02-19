@@ -102,6 +102,6 @@ func main() {
 
 		stats.IncrementSuccessfulInserts()
 	}
-	
+
 	slog.With("success", stats.GetSuccessfulInserts(), "failure", stats.GetFailedInserts()).Info("stats", "timeElapsed", time.Since(start).String())
 }
