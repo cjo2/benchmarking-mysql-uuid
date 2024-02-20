@@ -13,13 +13,14 @@ import (
 
 func main() {
 	var config = struct {
-		Iterations             int    `conf:"iterations" help:"Number of iterations to run"`
-		Version                int    `conf:"version" help:"Version of UUID to use"`
-		DbAddress              string `conf:"dbaddress" help:"Address of database"`
-		Db                     string `conf:"db" help:"Database to connect to"`
-		DbUsername             string `conf:"dbusername" help:"Username to connect to database"`
-		DbPassword             string `conf:"dbpassword" help:"Password to connect to database"`
-		DbAllowNativePasswords bool   `conf:"dballownativepasswords" help:"Allow native passwords"`
+		Iterations int `conf:"iterations" help:"Number of iterations to run"`
+		Version    int `conf:"version" help:"Version of UUID to use"`
+
+		DbAddress              string `conf:"address" help:"Address of database"`
+		Db                     string `conf:"database" help:"Database to connect to"`
+		DbUsername             string `conf:"username" help:"Username to connect to database"`
+		DbPassword             string `conf:"password" help:"Password to connect to database"`
+		DbAllowNativePasswords bool   `conf:"allow-native-passwords" help:"Allow native passwords"`
 	}{
 		// defaults should match docker-compose
 		DbAddress:              "localhost",
@@ -86,10 +87,22 @@ func main() {
 	}
 
 	go func() {
+		lastSuccessfulInserts := 0
+		lastTime := time.Now()
+
 		for {
 			select {
 			case <-time.Tick(3 * time.Second):
-				slog.With("success", stats.GetSuccessfulInserts(), "failure", stats.GetFailedInserts()).Info("stats", "timeElapsed", time.Since(start).String())
+				successfulInserts := stats.GetSuccessfulInserts()
+				now := time.Now()
+
+				// solve for how much time it took for the last batch of inserted rows on average
+				rowsPerSecond := float64(successfulInserts-lastSuccessfulInserts) / (now.Sub(lastTime).Seconds())
+
+				lastSuccessfulInserts = successfulInserts
+				lastTime = now
+
+				slog.With("success", successfulInserts, "failure", stats.GetFailedInserts(), "rowsPerSecond", rowsPerSecond).Info("stats", "timeElapsed", time.Since(start).String())
 			}
 		}
 	}()
