@@ -111,8 +111,8 @@ func main() {
 		}
 	}()
 
-	for i := 0; i < iterations; i++ {
-		if _, err = db.Exec("INSERT INTO TestTable (ID, Name) VALUES (?, ?)", ids[i], ""); err != nil {
+	for _, id := range ids {
+		if _, err = db.Exec("INSERT INTO TestTable (ID, Name) VALUES (?, ?)", id, ""); err != nil {
 			slog.Error("Error inserting row: ", err)
 			stats.IncrementFailedInserts()
 			continue
