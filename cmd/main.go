@@ -46,9 +46,9 @@ func main() {
 	}
 
 	defer func(db *sql.DB) {
-		err := db.Close()
-		if err != nil {
-			slog.Error("error trying to close db: ", err)
+		closeErr := db.Close()
+		if closeErr != nil {
+			slog.Error("error trying to close db: ", closeErr)
 		}
 	}(db)
 
