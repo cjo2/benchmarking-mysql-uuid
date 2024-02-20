@@ -14,7 +14,7 @@ import (
 func main() {
 	var config = struct {
 		Iterations int `conf:"iterations" help:"Number of iterations to run"`
-		Version    int `conf:"version" help:"Version of UUID to use"`
+		Version    int `conf:"version" help:"Version of UUID to use (1,4,6,7)"`
 
 		DbAddress              string `conf:"address" help:"Address of database"`
 		Db                     string `conf:"database" help:"Database to connect to"`
