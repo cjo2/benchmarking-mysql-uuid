@@ -77,6 +77,10 @@ func main() {
 			val, uuidErr = uuid.NewUUID()
 		case 4:
 			val, uuidErr = uuid.NewRandom()
+		case 6:
+			val, uuidErr = uuid.NewV6()
+		case 7:
+			val, uuidErr = uuid.NewV7()
 		}
 
 		if uuidErr != nil {
@@ -108,8 +112,7 @@ func main() {
 	}()
 
 	for i := 0; i < iterations; i++ {
-		_, err = db.Exec("INSERT INTO TestTable (ID, Name) VALUES (?, ?)", ids[i], "")
-		if err != nil {
+		if _, err = db.Exec("INSERT INTO TestTable (ID, Name) VALUES (?, ?)", ids[i], ""); err != nil {
 			slog.Error("Error inserting row: ", err)
 			stats.IncrementFailedInserts()
 			continue
