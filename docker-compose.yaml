@@ -1,11 +1,14 @@
-version: '3'
-
 services:
   mysql:
     image: mysql
     command: --default-authentication-plugin=mysql_native_password
-    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: admin
     ports:
       - "3306:3306"
+#    devices:
+#      - "/dev/sda:/dev/sda"
+#    blkio_config:
+#      device_write_bps:
+#        - path: /dev/sda
+#          rate: '1024k'
